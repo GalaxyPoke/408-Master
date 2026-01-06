@@ -1,0 +1,40 @@
+{
+  "name": "408-installer",
+  "version": "1.0.0",
+  "description": "408考研学习指南安装程序",
+  "author": "408考研学习指南",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.408study.installer",
+    "productName": "408考研学习指南安装程序",
+    "directories": {
+      "output": "../dist"
+    },
+    "files": [
+      "main.js",
+      "index.html"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist/win-unpacked",
+        "to": "app-files",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": "portable"
+    },
+    "portable": {
+      "artifactName": "408考研学习指南-安装程序.exe"
+    },
+    "compression": "maximum"
+  }
+}

@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>408考研学习指南</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+      background: transparent;
+      overflow: hidden;
+      user-select: none;
+    }
+    
+    .installer {
+      width: 480px;
+      height: 420px;
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* 标题栏 */
+    .titlebar {
+      height: 44px;
+      background: #fafafa;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      -webkit-app-region: drag;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .titlebar-title {
+      color: #999;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+    
+    .titlebar-buttons {
+      display: flex;
+      gap: 8px;
+      -webkit-app-region: no-drag;
+    }
+    
+    .titlebar-btn {
+      width: 12px;
+      height: 12px;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    
+    .titlebar-btn:hover { opacity: 0.8; }
+    .titlebar-btn.minimize { background: #ffbd2e; }
+    .titlebar-btn.close { background: #ff5f57; }
+    
+    /* 主内容 */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 30px 40px 25px;
+      overflow: hidden;
+    }
+    
+    /* Logo区域 */
+    .brand {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    
+    .logo {
+      width: 50px;
+      height: 50px;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+      font-size: 18px;
+      font-weight: 300;
+      color: #333;
+      letter-spacing: 1px;
+    }
+    
+    .app-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      letter-spacing: 2px;
+    }
+    
+    /* 步骤容器 */
+    .step { 
+      display: none; 
+      flex-direction: column; 
+      flex: 1;
+    }
+    .step.active { display: flex; }
+    
+    /* 步骤1：欢迎 */
+    .welcome-text {
+      text-align: center;
+      color: #888;
+      font-size: 13px;
+      line-height: 1.8;
+      font-weight: 400;
+      margin-bottom: auto;
+    }
+    
+    /* 步骤2：安装选项 */
+    .section-label {
+      font-size: 11px;
+      color: #999;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    
+    .path-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .path-input {
+      flex: 1;
+      padding: 12px 14px;
+      background: #fafafa;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #555;
+      outline: none;
+      transition: all 0.2s;
+    }
+    
+    .path-input:focus {
+      border-color: #ccc;
+      background: #fff;
+    }
+    
+    .path-btn {
+      padding: 12px 18px;
+      background: #fafafa;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #666;
+      transition: all 0.2s;
+    }
+    
+    .path-btn:hover {
+      background: #f0f0f0;
+      color: #333;
+    }
+    
+    .options {
+      flex: 1;
+    }
+    
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+    }
+    
+    .checkbox {
+      width: 16px;
+      height: 16px;
+      border: 1px solid #d0d0d0;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    
+    .checkbox.checked {
+      background: #333;
+      border-color: #333;
+    }
+    
+    .checkbox.checked::after {
+      content: '';
+      width: 8px;
+      height: 5px;
+      border-left: 1.5px solid #fff;
+      border-bottom: 1.5px solid #fff;
+      transform: rotate(-45deg) translateY(-1px);
+    }
+    
+    .option-label {
+      font-size: 13px;
+      color: #666;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    
+    .option:hover .option-label {
+      color: #333;
+    }
+    
+    /* 步骤3：进度 */
+    .progress-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .progress-track {
+      height: 3px;
+      background: #f0f0f0;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background: #333;
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #999;
+      letter-spacing: 0.5px;
+    }
+    
+    /* 步骤4：完成 */
+    .complete-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .complete-icon {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .complete-icon::after {
+      content: '';
+      width: 16px;
+      height: 10px;
+      border-left: 2px solid #333;
+      border-bottom: 2px solid #333;
+      transform: rotate(-45deg) translateY(-2px);
+    }
+    
+    .complete-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+    
+    .complete-desc {
+      color: #999;
+      font-size: 12px;
+      margin-bottom: 30px;
+    }
+    
+    /* 按钮区 */
+    .buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      padding-top: 20px;
+      margin-top: auto;
+    }
+    
+    .btn {
+      padding: 10px 28px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      letter-spacing: 0.5px;
+    }
+    
+    .btn-ghost {
+      background: #fff;
+      color: #888;
+      border: 1px solid #e5e5e5;
+    }
+    
+    .btn-ghost:hover {
+      color: #555;
+      border-color: #d0d0d0;
+      background: #fafafa;
+    }
+    
+    .btn-primary {
+      background: #333;
+      color: #fff;
+    }
+    
+    .btn-primary:hover {
+      background: #222;
+    }
+    
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    
+    /* 动画 */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .step.active {
+      animation: fadeIn 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="installer">
+    <div class="titlebar">
+      <span class="titlebar-title">安装程序</span>
+      <div class="titlebar-buttons">
+        <button class="titlebar-btn minimize" onclick="minimizeWindow()"></button>
+        <button class="titlebar-btn close" onclick="closeInstaller()"></button>
+      </div>
+    </div>
+    
+    <div class="main">
+      <div class="brand">
+        <div class="logo">408</div>
+        <div class="app-name">考研学习指南</div>
+      </div>
+      
+      <!-- 步骤1：欢迎 -->
+      <div class="step active" id="step1">
+        <p class="welcome-text">
+          专为计算机考研设计的学习工具<br>
+          涵盖数据结构、组成原理、操作系统、计算机网络
+        </p>
+        
+        <div class="buttons">
+          <button class="btn btn-ghost" onclick="closeInstaller()">取消</button>
+          <button class="btn btn-primary" onclick="goToStep(2)">开始安装</button>
+        </div>
+      </div>
+      
+      <!-- 步骤2：安装选项 -->
+      <div class="step" id="step2">
+        <div class="section-label">安装位置</div>
+        <div class="path-row">
+          <input type="text" class="path-input" id="installPath" readonly>
+          <button class="path-btn" onclick="selectPath()">浏览</button>
+        </div>
+        
+        <div class="options">
+          <div class="option" onclick="toggleCheck('desktop')">
+            <div class="checkbox checked" id="check-desktop"></div>
+            <span class="option-label">创建桌面快捷方式</span>
+          </div>
+          <div class="option" onclick="toggleCheck('startmenu')">
+            <div class="checkbox checked" id="check-startmenu"></div>
+            <span class="option-label">添加到开始菜单</span>
+          </div>
+        </div>
+        
+        <div class="buttons">
+          <button class="btn btn-ghost" onclick="goToStep(1)">返回</button>
+          <button class="btn btn-primary" onclick="startInstall()">安装</button>
+        </div>
+      </div>
+      
+      <!-- 步骤3：进度 -->
+      <div class="step" id="step3">
+        <div class="progress-section">
+          <div class="progress-track">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+          <div class="progress-info">
+            <span id="progressStatus">正在准备</span>
+            <span id="progressPercent">0%</span>
+          </div>
+        </div>
+        
+        <div class="buttons">
+          <button class="btn btn-ghost" disabled>安装中</button>
+        </div>
+      </div>
+      
+      <!-- 步骤4：完成 -->
+      <div class="step" id="step4">
+        <div class="complete-section">
+          <div class="complete-icon"></div>
+          <div class="complete-title">安装完成</div>
+          <p class="complete-desc">应用已准备就绪</p>
+          
+          <div class="option" onclick="toggleCheck('launch')">
+            <div class="checkbox checked" id="check-launch"></div>
+            <span class="option-label">立即启动</span>
+          </div>
+        </div>
+        
+        <div class="buttons">
+          <button class="btn btn-primary" onclick="finish()">完成</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const { ipcRenderer } = require('electron');
+    
+    let installPath = '';
+    const checkStates = {
+      desktop: true,
+      startmenu: true,
+      launch: true
+    };
+    
+    async function init() {
+      installPath = await ipcRenderer.invoke('get-default-path');
+      document.getElementById('installPath').value = installPath;
+    }
+    
+    init();
+    
+    function goToStep(step) {
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      document.getElementById('step' + step).classList.add('active');
+    }
+    
+    function toggleCheck(id) {
+      checkStates[id] = !checkStates[id];
+      const el = document.getElementById('check-' + id);
+      if (checkStates[id]) {
+        el.classList.add('checked');
+      } else {
+        el.classList.remove('checked');
+      }
+    }
+    
+    async function selectPath() {
+      const path = await ipcRenderer.invoke('select-path');
+      if (path) {
+        installPath = path;
+        document.getElementById('installPath').value = path;
+      }
+    }
+    
+    async function startInstall() {
+      goToStep(3);
+      
+      const options = {
+        installPath: document.getElementById('installPath').value,
+        createDesktop: checkStates.desktop,
+        createStartMenu: checkStates.startmenu
+      };
+      
+      ipcRenderer.on('install-progress', (event, data) => {
+        document.getElementById('progressBar').style.width = data.percent + '%';
+        document.getElementById('progressPercent').textContent = data.percent + '%';
+        document.getElementById('progressStatus').textContent = data.status;
+      });
+      
+      const result = await ipcRenderer.invoke('start-install', options);
+      
+      if (result.success) {
+        installPath = result.installPath;
+        goToStep(4);
+      } else {
+        alert('安装失败: ' + result.error);
+        goToStep(2);
+      }
+    }
+    
+    async function finish() {
+      if (checkStates.launch) {
+        await ipcRenderer.invoke('launch-app', installPath);
+      }
+      closeInstaller();
+    }
+    
+    function minimizeWindow() {
+      ipcRenderer.invoke('minimize-window');
+    }
+    
+    function closeInstaller() {
+      ipcRenderer.invoke('close-installer');
+    }
+  </script>
+</body>
+</html>

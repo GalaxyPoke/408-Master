@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>408视频管理后台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+  <div class="max-w-6xl mx-auto p-6">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-800">408视频管理后台</h1>
+          <p class="text-slate-500 mt-1">管理视频课程数据</p>
+        </div>
+        <button onclick="showPdfModal()" class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          PDF解析工具
+        </button>
+        <button onclick="showLicenseModal()" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center gap-2 ml-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+          卡密管理
+        </button>
+        <button onclick="showTranscribeModal()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2 ml-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+          视频转写
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-12 gap-6">
+      <!-- 左侧：科目和章节 -->
+      <div class="col-span-4 space-y-4">
+        <!-- 科目选择 -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4">
+          <h3 class="font-semibold text-slate-700 mb-3">选择科目</h3>
+          <div id="subjectList" class="space-y-2"></div>
+        </div>
+
+        <!-- 章节列表（可展开子目录） -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-slate-700">章节目录</h3>
+            <button onclick="showAddChapter()" class="text-blue-500 hover:text-blue-600 text-sm">+ 添加章节</button>
+          </div>
+          <div id="chapterList" class="max-h-[600px] overflow-y-auto"></div>
+        </div>
+      </div>
+
+      <!-- 右侧：拖拽上传区域 -->
+      <div class="col-span-8">
+        <div class="bg-white rounded-xl border border-slate-200 p-4">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-semibold text-slate-700" id="currentChapterName">选择章节上传视频</h3>
+              <p class="text-sm text-slate-400" id="videoCount"></p>
+            </div>
+            <button onclick="showAddVideo()" id="addVideoBtn" class="hidden px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 text-sm">
+              + 添加视频
+            </button>
+          </div>
+          
+          <!-- 拖拽上传区域 -->
+          <div id="dropZone" class="hidden border-2 border-dashed border-slate-300 rounded-xl p-8 mb-4 text-center transition-all hover:border-blue-400 hover:bg-blue-50/50">
+            <div class="text-slate-400">
+              <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+              </svg>
+              <p class="text-lg font-medium text-slate-600">拖拽视频文件到这里上传</p>
+              <p class="text-sm mt-1">支持 MP4、WebM、AVI 等格式，最大 500MB</p>
+            </div>
+          </div>
+          
+          <!-- 上传进度 -->
+          <div id="uploadProgress" class="hidden mb-4 p-4 bg-blue-50 rounded-xl">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-blue-700">正在上传...</span>
+              <span id="progressText" class="text-sm text-blue-600">0%</span>
+            </div>
+            <div class="w-full bg-blue-200 rounded-full h-2">
+              <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+          
+          <div id="videoList" class="hidden"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加章节弹窗 -->
+  <div id="chapterModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+      <h3 class="text-lg font-semibold mb-4">添加章节</h3>
+      <input type="text" id="chapterName" placeholder="章节名称" class="w-full px-4 py-3 border border-slate-200 rounded-lg mb-4">
+      <div class="flex space-x-3">
+        <button onclick="hideChapterModal()" class="flex-1 px-4 py-2 border border-slate-200 rounded-lg">取消</button>
+        <button onclick="addChapter()" class="flex-1 px-4 py-2 bg-slate-900 text-white rounded-lg">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加视频弹窗 -->
+  <div id="videoModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+      <h3 class="text-lg font-semibold mb-4">添加视频</h3>
+      <div class="space-y-3">
+        <input type="text" id="videoTitle" placeholder="视频标题" class="w-full px-4 py-3 border border-slate-200 rounded-lg">
+        <select id="videoType" class="w-full px-4 py-3 border border-slate-200 rounded-lg">
+          <option value="bilibili">B站视频</option>
+          <option value="link">在线链接</option>
+          <option value="local">本地文件</option>
+          <option value="netdisk">网盘链接</option>
+        </select>
+        <input type="text" id="videoUrl" placeholder="视频链接" class="w-full px-4 py-3 border border-slate-200 rounded-lg">
+        <input type="text" id="videoDesc" placeholder="描述(可选)" class="w-full px-4 py-3 border border-slate-200 rounded-lg">
+      </div>
+      <div class="flex space-x-3 mt-4">
+        <button onclick="hideVideoModal()" class="flex-1 px-4 py-2 border border-slate-200 rounded-lg">取消</button>
+        <button onclick="addVideo()" class="flex-1 px-4 py-2 bg-slate-900 text-white rounded-lg">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 重命名弹窗 -->
+  <div id="renameModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+      <h3 class="text-lg font-semibold mb-4">重命名视频</h3>
+      <input type="text" id="renameInput" placeholder="输入新名称" class="w-full px-4 py-3 border border-slate-200 rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+      <input type="hidden" id="renameVideoId">
+      <div class="flex space-x-3">
+        <button onclick="hideRenameModal()" class="flex-1 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50">取消</button>
+        <button onclick="confirmRename()" class="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PDF解析弹窗 -->
+  <div id="pdfModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">PDF解析工具</h3>
+        <button onclick="hidePdfModal()" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      
+      <!-- 上传区域 -->
+      <div id="pdfDropZone" class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center mb-4 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-all">
+        <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <p class="text-lg font-medium text-slate-600">点击或拖拽PDF文件到这里</p>
+        <p class="text-sm text-slate-400 mt-1">支持最大 500MB 的PDF文件</p>
+        <input type="file" id="pdfFileInput" accept=".pdf" class="hidden">
+      </div>
+
+      <!-- 或者输入本地路径 -->
+      <div class="flex items-center gap-3 mb-4">
+        <input type="text" id="pdfLocalPath" placeholder="或输入本地PDF文件路径，如: C:\Users\xxx\file.pdf" class="flex-1 px-4 py-3 border border-slate-200 rounded-lg">
+        <button onclick="parseLocalPdf()" class="px-4 py-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800">解析</button>
+      </div>
+
+      <!-- OCR图片识别 -->
+      <div class="border-t border-slate-200 pt-4 mt-4">
+        <h4 class="font-medium text-slate-700 mb-3">📷 OCR图片识别（扫描版PDF请先截图）</h4>
+        <div id="ocrDropZone" class="border-2 border-dashed border-orange-300 rounded-xl p-6 text-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/50 transition-all">
+          <svg class="w-10 h-10 mx-auto mb-2 text-orange-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <p class="text-slate-600">点击或拖拽图片进行OCR识别</p>
+          <p class="text-xs text-slate-400 mt-1">支持 JPG、PNG 格式</p>
+          <input type="file" id="ocrFileInput" accept="image/*" class="hidden">
+        </div>
+      </div>
+
+      <!-- 音频/视频转文字 -->
+      <div class="border-t border-slate-200 pt-4 mt-4">
+        <h4 class="font-medium text-slate-700 mb-3">🎤 音频/视频转文字</h4>
+        <div id="audioDropZone" class="border-2 border-dashed border-purple-300 rounded-xl p-6 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/50 transition-all">
+          <svg class="w-10 h-10 mx-auto mb-2 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+          </svg>
+          <p class="text-slate-600">点击或拖拽音频/视频文件进行转写</p>
+          <p class="text-xs text-slate-400 mt-1">支持 MP3、WAV、MP4、AVI 等格式，最大500MB</p>
+          <input type="file" id="audioFileInput" accept="audio/*,video/*,.mp3,.wav,.m4a,.ogg,.flac,.webm,.mp4,.avi,.mov,.mkv" class="hidden">
+        </div>
+      </div>
+
+      <!-- 解析进度 -->
+      <div id="pdfParseProgress" class="hidden mb-4 p-4 bg-emerald-50 rounded-xl">
+        <div class="flex items-center gap-2 text-emerald-700">
+          <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <span>正在解析PDF...</span>
+        </div>
+      </div>
+
+      <!-- 解析结果 -->
+      <div id="pdfResult" class="hidden flex-1 overflow-hidden flex flex-col">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <span id="pdfFileName" class="font-medium text-slate-700"></span>
+            <span id="pdfPageCount" class="text-sm text-slate-400 ml-2"></span>
+          </div>
+          <button onclick="copyPdfText()" class="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 text-sm flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+            复制全部
+          </button>
+        </div>
+        <textarea id="pdfTextContent" class="flex-1 w-full p-4 border border-slate-200 rounded-lg resize-none font-mono text-sm" readonly></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://localhost:3001/api';
+    let data = {};
+    let currentSubject = 'ds';
+    let currentChapter = null;
+
+    async function loadData() {
+      const res = await fetch(API + '/data');
+      data = await res.json();
+      renderSubjects();
+      renderChapters();
+    }
+
+    function renderSubjects() {
+      const list = document.getElementById('subjectList');
+      list.innerHTML = Object.entries(data).map(([id, s]) => `
+        <button onclick="selectSubject('${id}')" class="w-full text-left px-3 py-2 rounded-lg transition ${currentSubject === id ? 'bg-slate-900 text-white' : 'hover:bg-slate-100'}">
+          <span class="font-medium">${s.name}</span>
+          <span class="text-sm opacity-70 ml-2">${s.chapters?.length || 0}章</span>
+        </button>
+      `).join('');
+    }
+
+    function selectSubject(id) {
+      currentSubject = id;
+      currentChapter = null;
+      renderSubjects();
+      renderChapters();
+      renderVideos();
+    }
+
+    let expandedChapters = {};
+
+    function renderChapters() {
+      const list = document.getElementById('chapterList');
+      const chapters = data[currentSubject]?.chapters || [];
+      if (chapters.length === 0) {
+        list.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">暂无章节</p>';
+        return;
+      }
+      list.innerHTML = chapters.map(ch => {
+        const isExpanded = expandedChapters[ch.id];
+        const videos = ch.videos || [];
+        return `
+          <div class="border-b border-slate-100 last:border-b-0">
+            <!-- 章节标题 -->
+            <div class="flex items-center justify-between p-2 cursor-pointer hover:bg-slate-50 ${isExpanded ? 'bg-slate-50' : ''}" onclick="toggleChapter('${ch.id}')">
+              <div class="flex items-center flex-1 min-w-0">
+                <svg class="w-4 h-4 text-slate-400 mr-2 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-slate-700 text-sm truncate">${ch.name}</div>
+                  <div class="text-xs text-slate-400">${videos.length}个视频</div>
+                </div>
+              </div>
+              <div class="flex items-center space-x-1">
+                <button onclick="event.stopPropagation();currentChapter='${ch.id}';showAddVideo()" class="p-1 hover:bg-blue-50 rounded text-slate-400 hover:text-blue-500" title="添加视频">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </button>
+                <button onclick="event.stopPropagation();deleteChapter('${ch.id}')" class="p-1 hover:bg-red-50 rounded text-slate-400 hover:text-red-500" title="删除章节">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+              </div>
+            </div>
+            <!-- 子目录：视频列表 -->
+            ${isExpanded ? `
+              <div class="bg-slate-50/50">
+                ${videos.length === 0 ? '<div class="pl-8 pr-2 py-2 text-xs text-slate-400">暂无视频</div>' : videos.map((v, i) => `
+                  <div class="flex items-center pl-7 pr-2 py-1.5 hover:bg-slate-100 cursor-pointer group">
+                    <span class="w-5 h-5 rounded bg-slate-200 flex items-center justify-center text-slate-500 text-xs mr-2 flex-shrink-0">${i + 1}</span>
+                    <div class="flex-1 min-w-0">
+                      <div class="text-sm text-slate-600 truncate">${v.title}</div>
+                    </div>
+                    <button onclick="event.stopPropagation();renameVideo(${v.id}, '${v.title.replace(/'/g, "\\'")}')" class="p-1 hover:bg-blue-50 rounded text-slate-400 hover:text-blue-500 opacity-0 group-hover:opacity-100" title="重命名">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    </button>
+                    <button onclick="event.stopPropagation();deleteVideo(${v.id})" class="p-1 hover:bg-red-50 rounded text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100" title="删除">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleChapter(id) {
+      expandedChapters[id] = !expandedChapters[id];
+      currentChapter = id;
+      renderChapters();
+      renderVideos();
+    }
+
+    function selectChapter(id) {
+      currentChapter = id;
+      renderChapters();
+      renderVideos();
+    }
+
+    function renderVideos() {
+      const list = document.getElementById('videoList');
+      const btn = document.getElementById('addVideoBtn');
+      const title = document.getElementById('currentChapterName');
+      const count = document.getElementById('videoCount');
+      const dropZone = document.getElementById('dropZone');
+
+      if (!currentChapter) {
+        list.innerHTML = '<p class="text-slate-400 text-center py-8">选择左侧章节查看视频</p>';
+        btn.classList.add('hidden');
+        dropZone.classList.add('hidden');
+        title.textContent = '选择章节查看视频';
+        count.textContent = '';
+        return;
+      }
+
+      const chapter = data[currentSubject]?.chapters?.find(c => c.id === currentChapter);
+      if (!chapter) return;
+
+      btn.classList.remove('hidden');
+      dropZone.classList.remove('hidden');
+      title.textContent = chapter.name;
+      count.textContent = `${chapter.videos?.length || 0}个视频`;
+
+      const videos = chapter.videos || [];
+      if (videos.length === 0) {
+        list.innerHTML = '<p class="text-slate-400 text-center py-8">暂无视频，点击上方按钮添加</p>';
+        return;
+      }
+
+      const typeLabels = { bilibili: 'B站', link: '链接', local: '本地', netdisk: '网盘' };
+      list.innerHTML = videos.map((v, i) => `
+        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+          <div class="flex items-center space-x-3">
+            <span class="w-6 h-6 bg-slate-200 rounded text-center text-sm text-slate-600">${i + 1}</span>
+            <div>
+              <div class="font-medium text-slate-700">${v.title}</div>
+              <div class="text-xs text-slate-400">
+                <span class="px-1.5 py-0.5 bg-slate-200 rounded">${typeLabels[v.type] || '链接'}</span>
+                ${v.description ? '<span class="ml-2">' + v.description + '</span>' : ''}
+              </div>
+            </div>
+          </div>
+          <button onclick="deleteVideo(${v.id})" class="text-red-400 hover:text-red-500 p-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function showAddChapter() {
+      document.getElementById('chapterModal').classList.remove('hidden');
+      document.getElementById('chapterModal').classList.add('flex');
+      document.getElementById('chapterName').value = '';
+    }
+
+    function hideChapterModal() {
+      document.getElementById('chapterModal').classList.add('hidden');
+      document.getElementById('chapterModal').classList.remove('flex');
+    }
+
+    async function addChapter() {
+      const name = document.getElementById('chapterName').value.trim();
+      if (!name) return alert('请输入章节名称');
+      
+      const id = currentSubject + '-ch-' + Date.now();
+      await fetch(API + '/chapters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, subject_id: currentSubject, name })
+      });
+      
+      hideChapterModal();
+      await loadData();
+    }
+
+    async function deleteChapter(id) {
+      if (!confirm('确定删除此章节及其所有视频?')) return;
+      await fetch(API + '/chapters/' + id, { method: 'DELETE' });
+      if (currentChapter === id) currentChapter = null;
+      await loadData();
+    }
+
+    function showAddVideo() {
+      document.getElementById('videoModal').classList.remove('hidden');
+      document.getElementById('videoModal').classList.add('flex');
+      document.getElementById('videoTitle').value = '';
+      document.getElementById('videoUrl').value = '';
+      document.getElementById('videoDesc').value = '';
+    }
+
+    function hideVideoModal() {
+      document.getElementById('videoModal').classList.add('hidden');
+      document.getElementById('videoModal').classList.remove('flex');
+    }
+
+    async function addVideo() {
+      const title = document.getElementById('videoTitle').value.trim();
+      const type = document.getElementById('videoType').value;
+      const url = document.getElementById('videoUrl').value.trim();
+      const description = document.getElementById('videoDesc').value.trim();
+      
+      if (!title || !url) return alert('请填写标题和链接');
+      
+      await fetch(API + '/videos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chapter_id: currentChapter, title, type, url, description })
+      });
+      
+      hideVideoModal();
+      await loadData();
+    }
+
+    async function deleteVideo(id) {
+      if (!confirm('确定删除此视频?')) return;
+      await fetch(API + '/videos/' + id, { method: 'DELETE' });
+      await loadData();
+    }
+
+    function renameVideo(id, currentTitle) {
+      document.getElementById('renameVideoId').value = id;
+      document.getElementById('renameInput').value = currentTitle;
+      document.getElementById('renameModal').classList.remove('hidden');
+      document.getElementById('renameModal').classList.add('flex');
+      document.getElementById('renameInput').focus();
+      document.getElementById('renameInput').select();
+    }
+
+    function hideRenameModal() {
+      document.getElementById('renameModal').classList.add('hidden');
+      document.getElementById('renameModal').classList.remove('flex');
+    }
+
+    async function confirmRename() {
+      const id = document.getElementById('renameVideoId').value;
+      const newTitle = document.getElementById('renameInput').value.trim();
+      
+      if (!newTitle) {
+        alert('名称不能为空');
+        return;
+      }
+      
+      await fetch(API + '/videos/' + id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle })
+      });
+      
+      hideRenameModal();
+      await loadData();
+    }
+
+    // 拖拽上传功能
+    const dropZone = document.getElementById('dropZone');
+    
+    // 阻止默认拖拽行为
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(event => {
+      document.body.addEventListener(event, e => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+
+    // 拖拽进入
+    document.body.addEventListener('dragenter', () => {
+      if (currentChapter) {
+        dropZone.classList.add('border-blue-500', 'bg-blue-50');
+      }
+    });
+
+    // 拖拽离开
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+    });
+
+    // 放下文件
+    dropZone.addEventListener('drop', async (e) => {
+      dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+      
+      if (!currentChapter) {
+        alert('请先选择一个章节');
+        return;
+      }
+
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('video/'));
+      if (files.length === 0) {
+        alert('请拖入视频文件');
+        return;
+      }
+
+      for (const file of files) {
+        await uploadFile(file);
+      }
+    });
+
+    async function uploadFile(file) {
+      const progressDiv = document.getElementById('uploadProgress');
+      const progressBar = document.getElementById('progressBar');
+      const progressText = document.getElementById('progressText');
+      
+      progressDiv.classList.remove('hidden');
+      progressBar.style.width = '0%';
+      progressText.textContent = '0%';
+
+      try {
+        const formData = new FormData();
+        formData.append('video', file);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', API + '/upload');
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            progressBar.style.width = percent + '%';
+            progressText.textContent = percent + '%';
+          }
+        };
+
+        const result = await new Promise((resolve, reject) => {
+          xhr.onload = () => {
+            if (xhr.status === 200) {
+              resolve(JSON.parse(xhr.responseText));
+            } else {
+              try {
+                const err = JSON.parse(xhr.responseText);
+                reject(new Error(err.error || '上传失败'));
+              } catch {
+                reject(new Error('上传失败'));
+              }
+            }
+          };
+          xhr.onerror = () => reject(new Error('网络错误'));
+          xhr.send(formData);
+        });
+
+        // 上传成功，添加视频记录
+        const title = file.name.replace(/\.[^/.]+$/, '');
+        await fetch(API + '/videos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chapter_id: currentChapter,
+            title: title,
+            type: 'local',
+            url: result.url,
+            description: '文件大小: ' + (file.size / 1024 / 1024).toFixed(1) + 'MB'
+          })
+        });
+
+        await loadData();
+        alert('上传成功: ' + title);
+
+      } catch (error) {
+        alert('上传失败: ' + error.message);
+      } finally {
+        progressDiv.classList.add('hidden');
+      }
+    }
+
+    loadData();
+
+    // PDF解析功能
+    function showPdfModal() {
+      document.getElementById('pdfModal').classList.remove('hidden');
+      document.getElementById('pdfModal').classList.add('flex');
+      document.getElementById('pdfResult').classList.add('hidden');
+      document.getElementById('pdfLocalPath').value = '';
+    }
+
+    function hidePdfModal() {
+      document.getElementById('pdfModal').classList.add('hidden');
+      document.getElementById('pdfModal').classList.remove('flex');
+    }
+
+    // PDF拖拽和点击上传
+    const pdfDropZone = document.getElementById('pdfDropZone');
+    const pdfFileInput = document.getElementById('pdfFileInput');
+
+    pdfDropZone.addEventListener('click', () => pdfFileInput.click());
+    
+    pdfFileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        uploadAndParsePdf(e.target.files[0]);
+      }
+    });
+
+    pdfDropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      pdfDropZone.classList.add('border-emerald-500', 'bg-emerald-50');
+    });
+
+    pdfDropZone.addEventListener('dragleave', () => {
+      pdfDropZone.classList.remove('border-emerald-500', 'bg-emerald-50');
+    });
+
+    pdfDropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      pdfDropZone.classList.remove('border-emerald-500', 'bg-emerald-50');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type === 'application/pdf') {
+        uploadAndParsePdf(file);
+      } else {
+        alert('请上传PDF文件');
+      }
+    });
+
+    async function uploadAndParsePdf(file) {
+      const progress = document.getElementById('pdfParseProgress');
+      const result = document.getElementById('pdfResult');
+      
+      progress.classList.remove('hidden');
+      result.classList.add('hidden');
+
+      try {
+        const formData = new FormData();
+        formData.append('pdf', file);
+
+        const res = await fetch(API + '/pdf/parse', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        
+        if (data.success) {
+          showPdfResult(data);
+        } else {
+          alert('解析失败: ' + (data.error || '未知错误'));
+        }
+      } catch (error) {
+        alert('解析失败: ' + error.message);
+      } finally {
+        progress.classList.add('hidden');
+      }
+    }
+
+    async function parseLocalPdf() {
+      const filePath = document.getElementById('pdfLocalPath').value.trim();
+      if (!filePath) {
+        alert('请输入文件路径');
+        return;
+      }
+
+      const progress = document.getElementById('pdfParseProgress');
+      const result = document.getElementById('pdfResult');
+      
+      progress.classList.remove('hidden');
+      result.classList.add('hidden');
+
+      try {
+        const res = await fetch(API + '/pdf/parse-local', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filePath })
+        });
+
+        const data = await res.json();
+        
+        if (data.success) {
+          showPdfResult(data);
+        } else {
+          alert('解析失败: ' + (data.error || '未知错误'));
+        }
+      } catch (error) {
+        alert('解析失败: ' + error.message);
+      } finally {
+        progress.classList.add('hidden');
+      }
+    }
+
+    function showPdfResult(data) {
+      document.getElementById('pdfFileName').textContent = data.filename;
+      document.getElementById('pdfPageCount').textContent = `(${data.pages}页)`;
+      document.getElementById('pdfTextContent').value = data.text;
+      document.getElementById('pdfResult').classList.remove('hidden');
+    }
+
+    function copyPdfText() {
+      const text = document.getElementById('pdfTextContent').value;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('已复制到剪贴板');
+      });
+    }
+
+    // 音频转文字
+    const audioDropZone = document.getElementById('audioDropZone');
+    const audioFileInput = document.getElementById('audioFileInput');
+
+    audioDropZone.addEventListener('click', () => audioFileInput.click());
+    
+    audioFileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        transcribeAudio(e.target.files[0]);
+      }
+    });
+
+    audioDropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      audioDropZone.classList.add('border-purple-500', 'bg-purple-50');
+    });
+
+    audioDropZone.addEventListener('dragleave', () => {
+      audioDropZone.classList.remove('border-purple-500', 'bg-purple-50');
+    });
+
+    audioDropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      audioDropZone.classList.remove('border-purple-500', 'bg-purple-50');
+      const file = e.dataTransfer.files[0];
+      if (file && (file.type.startsWith('audio/') || file.type.startsWith('video/') || file.name.match(/\.(mp3|wav|m4a|ogg|flac|webm|mp4|avi|mov|mkv)$/i))) {
+        transcribeAudio(file);
+      } else {
+        alert('请上传音频或视频文件');
+      }
+    });
+
+    async function transcribeAudio(file) {
+      const progress = document.getElementById('pdfParseProgress');
+      const result = document.getElementById('pdfResult');
+      
+      progress.classList.remove('hidden');
+      progress.querySelector('span').textContent = '正在转写音频，请稍候...';
+      result.classList.add('hidden');
+
+      try {
+        const formData = new FormData();
+        formData.append('audio', file);
+
+        const res = await fetch(API + '/audio/transcribe', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        
+        if (data.success) {
+          document.getElementById('pdfFileName').textContent = file.name;
+          document.getElementById('pdfPageCount').textContent = data.duration ? `(时长: ${Math.round(data.duration)}秒)` : '';
+          document.getElementById('pdfTextContent').value = data.text;
+          result.classList.remove('hidden');
+        } else {
+          alert('音频转写失败: ' + (data.error || '未知错误'));
+        }
+      } catch (error) {
+        alert('音频转写失败: ' + error.message);
+      } finally {
+        progress.classList.add('hidden');
+        progress.querySelector('span').textContent = '正在解析PDF...';
+      }
+    }
+
+    // OCR图片识别
+    const ocrDropZone = document.getElementById('ocrDropZone');
+    const ocrFileInput = document.getElementById('ocrFileInput');
+
+    ocrDropZone.addEventListener('click', () => ocrFileInput.click());
+    
+    ocrFileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        ocrImage(e.target.files[0]);
+      }
+    });
+
+    ocrDropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      ocrDropZone.classList.add('border-orange-500', 'bg-orange-50');
+    });
+
+    ocrDropZone.addEventListener('dragleave', () => {
+      ocrDropZone.classList.remove('border-orange-500', 'bg-orange-50');
+    });
+
+    ocrDropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      ocrDropZone.classList.remove('border-orange-500', 'bg-orange-50');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        ocrImage(file);
+      } else {
+        alert('请上传图片文件');
+      }
+    });
+
+    async function ocrImage(file) {
+      const progress = document.getElementById('pdfParseProgress');
+      const result = document.getElementById('pdfResult');
+      
+      progress.classList.remove('hidden');
+      progress.querySelector('span').textContent = '正在OCR识别，请稍候...';
+      result.classList.add('hidden');
+
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const res = await fetch(API + '/ocr/image', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        
+        if (data.success) {
+          document.getElementById('pdfFileName').textContent = file.name;
+          document.getElementById('pdfPageCount').textContent = `(置信度: ${Math.round(data.confidence)}%)`;
+          document.getElementById('pdfTextContent').value = data.text;
+          result.classList.remove('hidden');
+        } else {
+          alert('OCR识别失败: ' + (data.error || '未知错误'));
+        }
+      } catch (error) {
+        alert('OCR识别失败: ' + error.message);
+      } finally {
+        progress.classList.add('hidden');
+        progress.querySelector('span').textContent = '正在解析PDF...';
+      }
+    }
+
+    // ========== 卡密管理功能 ==========
+    function showLicenseModal() {
+      document.getElementById('licenseModal').classList.remove('hidden');
+      document.getElementById('licenseModal').classList.add('flex');
+      loadLicenseStats();
+      loadLicenses();
+    }
+
+    function hideLicenseModal() {
+      document.getElementById('licenseModal').classList.add('hidden');
+      document.getElementById('licenseModal').classList.remove('flex');
+    }
+
+    async function loadLicenseStats() {
+      try {
+        const res = await fetch(API + '/license/stats?adminKey=408admin2024');
+        const stats = await res.json();
+        
+        document.getElementById('statTotal').textContent = stats.totalLicenses || 0;
+        document.getElementById('statUsed').textContent = stats.usedLicenses || 0;
+        document.getElementById('statUnused').textContent = stats.unusedLicenses || 0;
+        document.getElementById('statActive').textContent = stats.activeUsers || 0;
+        document.getElementById('statToday').textContent = stats.todayVerifies || 0;
+      } catch (err) {
+        console.error('加载统计失败:', err);
+      }
+    }
+
+    async function generateLicenses() {
+      const count = parseInt(document.getElementById('licenseCount').value) || 1;
+      const type = document.getElementById('licenseType').value;
+      const days = parseInt(document.getElementById('licenseDays').value) || 30;
+      
+      try {
+        const res = await fetch(API + '/license/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ count, type, days, adminKey: '408admin2024' })
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+          alert('生成成功！\n\n' + data.codes.join('\n'));
+          loadLicenseStats();
+          loadLicenses();
+        } else {
+          alert('生成失败: ' + data.error);
+        }
+      } catch (err) {
+        alert('网络错误');
+      }
+    }
+
+    async function loadLicenses() {
+      try {
+        const res = await fetch(API + '/license/list?adminKey=408admin2024');
+        const licenses = await res.json();
+        
+        const list = document.getElementById('licenseList');
+        if (licenses.length === 0) {
+          list.innerHTML = '<p class="text-slate-400 text-center py-4">暂无卡密</p>';
+          return;
+        }
+        
+        list.innerHTML = licenses.map(l => `
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+            <div class="flex-1 min-w-0">
+              <div class="font-mono font-medium ${l.used ? 'text-slate-400 line-through' : 'text-slate-700'}">${l.code}</div>
+              <div class="text-xs text-slate-400">
+                ${l.type} · ${l.days}天 · 
+                ${l.used ? '已使用 ' + (l.used_at || '').split('T')[0] : '未使用'}
+                ${l.machine_id ? ' · 机器码: ' + l.machine_id : ''}
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-1 rounded text-xs ${l.used ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
+                ${l.used ? '已用' : '可用'}
+              </span>
+              ${l.used && l.machine_id ? `
+                <button onclick="revokeLicense('${l.machine_id}')" class="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600" title="吊销激活">
+                  吊销
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('加载卡密失败:', err);
+      }
+    }
+
+    async function revokeLicense(machineId) {
+      if (!confirm('确定要吊销此机器的激活状态吗？用户将需要重新激活。')) return;
+      
+      try {
+        const res = await fetch(API + '/license/revoke', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ machineId, adminKey: '408admin2024' })
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+          alert('已吊销激活');
+          loadLicenseStats();
+          loadLicenses();
+        } else {
+          alert('吊销失败: ' + data.error);
+        }
+      } catch (err) {
+        alert('网络错误');
+      }
+    }
+
+    function copyLicenseCode(code) {
+      navigator.clipboard.writeText(code);
+      alert('已复制: ' + code);
+    }
+  </script>
+
+  <!-- 卡密管理弹窗 -->
+  <div id="licenseModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">🔑 卡密管理</h3>
+        <button onclick="hideLicenseModal()" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      
+      <!-- 统计数据 -->
+      <div class="grid grid-cols-5 gap-3 mb-4">
+        <div class="bg-slate-50 rounded-lg p-3 text-center">
+          <div id="statTotal" class="text-2xl font-bold text-slate-700">0</div>
+          <div class="text-xs text-slate-400">总卡密</div>
+        </div>
+        <div class="bg-green-50 rounded-lg p-3 text-center">
+          <div id="statUnused" class="text-2xl font-bold text-green-600">0</div>
+          <div class="text-xs text-slate-400">未使用</div>
+        </div>
+        <div class="bg-red-50 rounded-lg p-3 text-center">
+          <div id="statUsed" class="text-2xl font-bold text-red-600">0</div>
+          <div class="text-xs text-slate-400">已使用</div>
+        </div>
+        <div class="bg-blue-50 rounded-lg p-3 text-center">
+          <div id="statActive" class="text-2xl font-bold text-blue-600">0</div>
+          <div class="text-xs text-slate-400">活跃用户</div>
+        </div>
+        <div class="bg-purple-50 rounded-lg p-3 text-center">
+          <div id="statToday" class="text-2xl font-bold text-purple-600">0</div>
+          <div class="text-xs text-slate-400">今日验证</div>
+        </div>
+      </div>
+      
+      <!-- 生成卡密 -->
+      <div class="bg-slate-50 rounded-xl p-4 mb-4">
+        <h4 class="font-medium text-slate-700 mb-3">生成新卡密</h4>
+        <div class="grid grid-cols-4 gap-3">
+          <div>
+            <label class="text-xs text-slate-500">数量</label>
+            <input type="number" id="licenseCount" value="1" min="1" max="100" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+          </div>
+          <div>
+            <label class="text-xs text-slate-500">类型</label>
+            <select id="licenseType" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+              <option value="month">月卡</option>
+              <option value="quarter">季卡</option>
+              <option value="year">年卡</option>
+              <option value="permanent">永久</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500">天数</label>
+            <input type="number" id="licenseDays" value="30" min="1" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+          </div>
+          <div class="flex items-end">
+            <button onclick="generateLicenses()" class="w-full py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600">
+              生成卡密
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 卡密列表 -->
+      <div class="flex-1 overflow-auto">
+        <h4 class="font-medium text-slate-700 mb-3">卡密列表</h4>
+        <div id="licenseList" class="space-y-2 max-h-[350px] overflow-y-auto"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 视频转写管理弹窗 -->
+  <div id="transcribeModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">🎤 视频自动转写</h3>
+        <button onclick="hideTranscribeModal()" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      
+      <!-- 统计数据 -->
+      <div class="grid grid-cols-5 gap-3 mb-4">
+        <div class="bg-yellow-50 rounded-lg p-3 text-center">
+          <div id="tsPending" class="text-2xl font-bold text-yellow-600">0</div>
+          <div class="text-xs text-slate-400">等待中</div>
+        </div>
+        <div class="bg-blue-50 rounded-lg p-3 text-center">
+          <div id="tsProcessing" class="text-2xl font-bold text-blue-600">0</div>
+          <div class="text-xs text-slate-400">处理中</div>
+        </div>
+        <div class="bg-green-50 rounded-lg p-3 text-center">
+          <div id="tsCompleted" class="text-2xl font-bold text-green-600">0</div>
+          <div class="text-xs text-slate-400">已完成</div>
+        </div>
+        <div class="bg-red-50 rounded-lg p-3 text-center">
+          <div id="tsFailed" class="text-2xl font-bold text-red-600">0</div>
+          <div class="text-xs text-slate-400">失败</div>
+        </div>
+        <div class="bg-purple-50 rounded-lg p-3 text-center">
+          <div id="tsTotal" class="text-2xl font-bold text-purple-600">0</div>
+          <div class="text-xs text-slate-400">总转写</div>
+        </div>
+      </div>
+      
+      <!-- 批量操作 -->
+      <div class="bg-slate-50 rounded-xl p-4 mb-4">
+        <h4 class="font-medium text-slate-700 mb-3">批量转写</h4>
+        <div class="flex items-center gap-3 flex-wrap">
+          <select id="tsSubject" class="px-3 py-2 border border-slate-200 rounded-lg">
+            <option value="">选择科目</option>
+            <option value="ds">数据结构</option>
+            <option value="co">计算机组成</option>
+            <option value="os">操作系统</option>
+            <option value="cn">计算机网络</option>
+          </select>
+          <button onclick="batchTranscribe('subject')" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+            转写该科目
+          </button>
+          <button onclick="batchTranscribe('all')" class="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800">
+            转写所有视频
+          </button>
+          <button onclick="retryFailed()" class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
+            重试失败任务
+          </button>
+          <button onclick="loadTranscribeStatus()" class="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50">
+            刷新状态
+          </button>
+        </div>
+        <p class="text-xs text-slate-400 mt-2">
+          提示：需要先启动 faster-whisper-server (Docker: docker run -d -p 8000:8000 ghcr.io/etalab-ia/faster-whisper-server)，或使用硅基流动 API
+        </p>
+      </div>
+      
+      <!-- 任务列表 -->
+      <div class="flex-1 overflow-auto">
+        <h4 class="font-medium text-slate-700 mb-3">最近任务</h4>
+        <div id="transcribeList" class="space-y-2 max-h-[350px] overflow-y-auto"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========== 视频转写功能 ==========
+    function showTranscribeModal() {
+      document.getElementById('transcribeModal').classList.remove('hidden');
+      document.getElementById('transcribeModal').classList.add('flex');
+      loadTranscribeStatus();
+    }
+
+    function hideTranscribeModal() {
+      document.getElementById('transcribeModal').classList.add('hidden');
+      document.getElementById('transcribeModal').classList.remove('flex');
+    }
+
+    async function loadTranscribeStatus() {
+      try {
+        const res = await fetch(API + '/transcribe/status');
+        const data = await res.json();
+        
+        document.getElementById('tsPending').textContent = data.queue?.pending || 0;
+        document.getElementById('tsProcessing').textContent = data.queue?.processing || 0;
+        document.getElementById('tsCompleted').textContent = data.queue?.completed || 0;
+        document.getElementById('tsFailed').textContent = data.queue?.failed || 0;
+        document.getElementById('tsTotal').textContent = data.totalTranscripts || 0;
+        
+        const list = document.getElementById('transcribeList');
+        if (!data.recentTasks || data.recentTasks.length === 0) {
+          list.innerHTML = '<p class="text-slate-400 text-center py-4">暂无转写任务</p>';
+          return;
+        }
+        
+        const statusColors = {
+          pending: 'bg-yellow-100 text-yellow-600',
+          processing: 'bg-blue-100 text-blue-600',
+          completed: 'bg-green-100 text-green-600',
+          failed: 'bg-red-100 text-red-600'
+        };
+        const statusText = {
+          pending: '等待中',
+          processing: '处理中',
+          completed: '已完成',
+          failed: '失败'
+        };
+        
+        list.innerHTML = data.recentTasks.map(t => `
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-slate-700 truncate">${t.video_title || '视频 #' + t.video_id}</div>
+              <div class="text-xs text-slate-400">
+                ${t.created_at?.split('T')[0] || ''} 
+                ${t.error ? '· 错误: ' + t.error : ''}
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-1 rounded text-xs ${statusColors[t.status] || 'bg-slate-100'}">
+                ${statusText[t.status] || t.status}
+              </span>
+              ${t.status === 'failed' ? `
+                <button onclick="retryTask(${t.video_id})" class="px-2 py-1 bg-orange-500 text-white text-xs rounded hover:bg-orange-600">
+                  重试
+                </button>
+              ` : ''}
+              ${t.status === 'completed' ? `
+                <button onclick="viewTranscript(${t.video_id})" class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600">
+                  查看
+                </button>
+                <button onclick="reTranscribe(${t.video_id})" class="px-2 py-1 bg-purple-500 text-white text-xs rounded hover:bg-purple-600">
+                  重新转写
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('加载转写状态失败:', err);
+      }
+    }
+
+    async function batchTranscribe(type) {
+      let body = {};
+      
+      if (type === 'all') {
+        if (!confirm('确定要转写所有本地视频吗？这可能需要很长时间。')) return;
+        body = { all: true };
+      } else if (type === 'subject') {
+        const subjectId = document.getElementById('tsSubject').value;
+        if (!subjectId) {
+          alert('请选择科目');
+          return;
+        }
+        body = { subjectId };
+      }
+      
+      try {
+        const res = await fetch(API + '/transcribe/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        
+        const data = await res.json();
+        alert(`已添加 ${data.added} 个视频到转写队列，跳过 ${data.skipped} 个（已有转写或正在处理）`);
+        loadTranscribeStatus();
+      } catch (err) {
+        alert('操作失败: ' + err.message);
+      }
+    }
+
+    async function retryFailed() {
+      try {
+        const res = await fetch(API + '/transcribe/retry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ all: true })
+        });
+        
+        const data = await res.json();
+        alert(`已重试 ${data.retried} 个失败任务`);
+        loadTranscribeStatus();
+      } catch (err) {
+        alert('操作失败: ' + err.message);
+      }
+    }
+
+    async function retryTask(videoId) {
+      try {
+        await fetch(API + '/transcribe/retry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ videoId })
+        });
+        loadTranscribeStatus();
+      } catch (err) {
+        alert('重试失败');
+      }
+    }
+
+    async function reTranscribe(videoId) {
+      if (!confirm('确定要重新转写吗？这将覆盖现有的转写文本。')) return;
+      
+      try {
+        // 先删除现有转写
+        await fetch(API + '/transcribe/' + videoId, { method: 'DELETE' });
+        // 重新添加到队列
+        await fetch(API + '/transcribe/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ videoId })
+        });
+        alert('已添加到转写队列');
+        loadTranscribeStatus();
+      } catch (err) {
+        alert('操作失败: ' + err.message);
+      }
+    }
+
+    async function viewTranscript(videoId) {
+      try {
+        const res = await fetch(API + '/transcribe/' + videoId);
+        const data = await res.json();
+        
+        if (data.transcript) {
+          // 显示在专门的转写结果弹窗
+          const text = data.transcript;
+          const wordCount = data.word_count || text.length;
+          
+          // 创建一个简单的弹窗显示
+          const modal = document.createElement('div');
+          modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-[60]';
+          modal.innerHTML = `
+            <div class="bg-white rounded-xl p-6 w-full max-w-3xl mx-4 max-h-[80vh] flex flex-col">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h3 class="text-lg font-semibold">转写文本</h3>
+                  <p class="text-sm text-slate-400">${wordCount} 字</p>
+                </div>
+                <button onclick="this.closest('.fixed').remove()" class="text-slate-400 hover:text-slate-600">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+              </div>
+              <textarea class="flex-1 w-full p-4 border border-slate-200 rounded-lg resize-none font-mono text-sm min-h-[300px]" readonly>${text}</textarea>
+              <div class="flex justify-end gap-2 mt-4">
+                <button onclick="navigator.clipboard.writeText(this.closest('.bg-white').querySelector('textarea').value);alert('已复制')" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200">
+                  复制文本
+                </button>
+                <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800">
+                  关闭
+                </button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(modal);
+        } else {
+          alert('暂无转写文本');
+        }
+      } catch (err) {
+        alert('获取失败: ' + err.message);
+      }
+    }
+
+    // 自动刷新转写状态
+    let transcribeRefreshTimer = null;
+    const originalShowTranscribeModal = showTranscribeModal;
+    showTranscribeModal = function() {
+      originalShowTranscribeModal();
+      transcribeRefreshTimer = setInterval(loadTranscribeStatus, 5000);
+    };
+    const originalHideTranscribeModal = hideTranscribeModal;
+    hideTranscribeModal = function() {
+      originalHideTranscribeModal();
+      if (transcribeRefreshTimer) {
+        clearInterval(transcribeRefreshTimer);
+        transcribeRefreshTimer = null;
+      }
+    };
+  </script>
+</body>
+</html>

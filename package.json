@@ -1,0 +1,135 @@
+{
+  "name": "408-study-guide",
+  "version": "1.0.0",
+  "private": true,
+  "main": "build/electron.js",
+  "homepage": "./",
+  "author": "408考研学习指南",
+  "description": "408考研学习指南桌面应用",
+  "dependencies": {
+    "@blocknote/core": "^0.45.0",
+    "@blocknote/mantine": "^0.45.0",
+    "@blocknote/react": "^0.45.0",
+    "@mantine/core": "^8.3.10",
+    "@mdxeditor/editor": "^3.52.1",
+    "@uiw/react-md-editor": "^4.0.11",
+    "@xyflow/react": "^12.10.0",
+    "better-sqlite3": "^12.5.0",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "form-data": "^4.0.5",
+    "gif.js": "^0.2.0",
+    "html2canvas": "^1.4.1",
+    "lucide-react": "^0.263.1",
+    "mammoth": "^1.11.0",
+    "moment": "^2.30.1",
+    "multer": "^2.0.2",
+    "pdf-parse": "^1.1.1",
+    "pdf-poppler": "^0.2.3",
+    "pdf2pic": "^3.2.0",
+    "react": "^18.2.0",
+    "react-big-calendar": "^1.19.4",
+    "react-calendar-heatmap": "^1.10.0",
+    "react-dom": "^18.2.0",
+    "react-drawio": "^1.0.7",
+    "react-markdown": "^10.1.0",
+    "react-player": "^3.4.0",
+    "react-scripts": "5.0.1",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
+    "tesseract.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.34.5",
+    "wait-on": "^7.2.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "server": "node server/index.js",
+    "stt": "cd C:\\Users\\LENOVO\\Desktop\\study\\github上的工具\\stt && python start.py",
+    "dev": "concurrently \"npm run server\" \"npm start\"",
+    "dev:all": "concurrently \"npm run server\" \"npm start\" \"npm run stt\"",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "electron-dev": "concurrently \"npm run server\" \"npm start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron-build": "npm run build && electron-builder",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.408study.guide",
+    "productName": "408考研学习指南",
+    "copyright": "Copyright © 2024 408考研学习指南",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "build/**/*",
+      "!node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "server/",
+        "to": "server/",
+        "filter": [
+          "**/*",
+          "!*.db"
+        ]
+      }
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "**/*.node"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "dir",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "requestedExecutionLevel": "asInvoker",
+      "signAndEditExecutable": false,
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "public/icon.icns",
+      "category": "public.app-category.education"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "public/icon.png",
+      "category": "Education"
+    }
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

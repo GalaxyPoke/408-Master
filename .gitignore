@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+installer/node_modules/
+
+# Build outputs
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temp files
+*.tmp
+*.temp
+
+# Output files
+pdf_output.txt
+word_output.txt
